@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>For Delilah ♥</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --rose:    #ff4d8d;
+      --blush:   #ff9eb5;
+      --cream:   rgba(255,255,255,0.92);
+      --muted:   rgba(255,255,255,0.45);
+      --glass:   rgba(255,255,255,0.07);
+      --border:  rgba(255,255,255,0.13);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Lato', sans-serif;
+      background: linear-gradient(145deg, #0d0118 0%, #2a0638 30%, #5c0f52 65%, #a01060 100%);
+      min-height: 100vh;
+    }
+
+    /* ── Particles ── */
+    #particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      bottom: -40px;
+      font-size: 18px;
+      animation: rise linear infinite;
+      opacity: 0;
+      user-select: none;
+    }
+
+    @keyframes rise {
+      0%   { transform: translateY(0)   rotate(0deg)   scale(0.8); opacity: 0; }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.3; }
+      100% { transform: translateY(-110vh) rotate(720deg) scale(1.1); opacity: 0; }
+    }
+
+    /* ── Glow orbs ── */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #ff4d8d, transparent 70%);
+      top: -120px; left: -120px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #c026d3, transparent 70%);
+      bottom: -100px; right: -100px;
+    }
+
+    /* ── Card ── */
+    .card {
+      position: relative;
+      z-index: 10;
+      background: var(--glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 56px 52px 44px;
+      max-width: 580px;
+      width: 92%;
+      text-align: center;
+      color: white;
+      box-shadow:
+        0 30px 70px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      animation: fadeIn 1.2s ease both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Greeting label ── */
+    .label {
+      font-size: 11px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--blush);
+      margin-bottom: 18px;
+      opacity: 0.85;
+    }
+
+    /* ── Name ── */
+    .name {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: #fff;
+      text-shadow: 0 0 40px rgba(255,77,141,0.4);
+    }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 22px auto;
+      width: fit-content;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,77,141,0.5));
+    }
+    .divider::after {
+      background: linear-gradient(90deg, rgba(255,77,141,0.5), transparent);
+    }
+    .divider span { color: var(--rose); font-size: 18px; }
+
+    /* ── Message ── */
+    .message {
+      font-family: 'Playfair Display', serif;
+      font-size: 19px;
+      font-style: italic;
+      line-height: 1.85;
+      color: var(--cream);
+      min-height: 80px;
+      transition: opacity 0.5s ease;
+    }
+
+    .message.loading { opacity: 0.4; }
+
+    /* ── From ── */
+    .from {
+      margin-top: 28px;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--blush);
+      opacity: 0.75;
+    }
+
+    /* ── Countdown ── */
+    .countdown-wrap {
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+    }
+
+    .countdown-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .countdown-time {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--blush);
+      letter-spacing: 2px;
+    }
+
+    /* ── Pulse dot ── */
+    .live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .live::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--rose);
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.3; transform: scale(0.7); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="particles"></div>
+
+  <div class="card">
+    <div class="label" id="label">Good Morning</div>
+    <div class="name">Delilah</div>
+
+    <div class="divider"><span>♥</span></div>
+
+    <div class="message loading" id="message">Loading your message…</div>
+
+    <div class="from">with love, Ricky</div>
+
+    <div class="countdown-wrap">
+      <div class="countdown-label">next message in</div>
+      <div class="countdown-time" id="countdown">—</div>
+    </div>
+
+    <div class="live">live</div>
+  </div>
+
+  <script>
+    // ── Particles ──────────────────────────────────────────────────────────
+    const SYMBOLS = ['♥', '♡', '✦', '✧', '˚', '·'];
+    const container = document.getElementById('particles');
+
+    function spawnParticle() {
+      const el = document.createElement('div');
+      el.className = 'particle';
+      el.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.fontSize = (12 + Math.random() * 14) + 'px';
+      const dur = 8 + Math.random() * 10;
+      el.style.animationDuration = dur + 's';
+      el.style.animationDelay = (Math.random() * dur) + 's';
+      el.style.color = `hsl(${320 + Math.random() * 40}, 80%, ${70 + Math.random() * 20}%)`;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), (dur + 12) * 1000);
+    }
+
+    // Seed initial particles
+    for (let i = 0; i < 22; i++) spawnParticle();
+    setInterval(spawnParticle, 1400);
+
+    // ── Message fetch ─────────────────────────────────────────────────────
+    const msgEl    = document.getElementById('message');
+    const labelEl  = document.getElementById('label');
+
+    async function loadMessage() {
+      try {
+        const res  = await fetch('/api/message');
+        const data = await res.json();
+
+        labelEl.textContent = data.type === 'morning' ? 'Good Morning ☀️' : 'Good Evening 🌙';
+        msgEl.classList.remove('loading');
+        msgEl.textContent = data.content;
+      } catch {
+        msgEl.textContent = 'Something beautiful is on its way…';
+        msgEl.classList.remove('loading');
+      }
+    }
+
+    loadMessage();
+
+    // ── Countdown ─────────────────────────────────────────────────────────
+    const countdownEl = document.getElementById('countdown');
+    let remainingMs = null;
+    let lastFetch = Date.now();
+
+    async function fetchNext() {
+      try {
+        const res  = await fetch('/api/next');
+        const data = await res.json();
+        remainingMs = data.nextMs;
+        lastFetch = Date.now();
+      } catch {}
+    }
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tickCountdown() {
+      if (remainingMs === null) return;
+      const elapsed = Date.now() - lastFetch;
+      const left = Math.max(0, remainingMs - elapsed);
+
+      const h = Math.floor(left / 3_600_000);
+      const m = Math.floor((left % 3_600_000) / 60_000);
+      const s = Math.floor((left % 60_000) / 1_000);
+
+      countdownEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+      if (left === 0) {
+        // New message should be arriving — reload
+        setTimeout(() => { loadMessage(); fetchNext(); }, 3000);
+      }
+    }
+
+    fetchNext();
+    setInterval(tickCountdown, 1000);
+    setInterval(fetchNext, 60_000); // re-sync every minute
+  </script>
+</body>
+</html>
