@@ -25,8 +25,7 @@ const prompts = {
 
 async function generateMessage(type) {
   const systemPrompt = `You write short, sweet, deeply personal love messages from Ricky to his girlfriend Kinna.
-Ricky's pet name for Kinna is "cum slut" — use it naturally and affectionately within the message.
-Tone: warm, sweet, intimate, loving. Not cheesy or generic.
+Tone: warm, romantic, heartfelt, and genuine. Not cheesy or generic — make it feel real and personal.
 Length: 2–4 sentences. Sign off with "— Ricky" at the end.`;
 
   const response = await anthropic.messages.create({
