@@ -20,8 +20,8 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 async function generateMessage(type) {
   const isMorning = type === 'morning';
 
-  const systemPrompt = `You write short, sweet, deeply personal love messages from Ricky to his girlfriend Delilah.
-Ricky's pet name for Delilah is "cum slut" — use it naturally and affectionately within the message.
+  const systemPrompt = `You write short, sweet, deeply personal love messages from Ricky to his girlfriend Kinna.
+Ricky's pet name for Kinna is "cum slut" — use it naturally and affectionately within the message.
 Tone: warm, sweet, intimate, loving. Not cheesy or generic.
 Length: 2–4 sentences. Sign off with "— Ricky" at the end.`;
 
