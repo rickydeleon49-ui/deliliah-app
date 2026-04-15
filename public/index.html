@@ -267,7 +267,8 @@
         const res  = await fetch('/api/message');
         const data = await res.json();
 
-        labelEl.textContent = data.type === 'morning' ? 'Good Morning ☀️' : 'Good Evening 🌙';
+        const labels = { morning: 'Good Morning ☀️', afternoon: 'Good Afternoon 🌸', evening: 'Good Evening 🌙' };
+        labelEl.textContent = labels[data.type] || 'Good Morning ☀️';
         msgEl.classList.remove('loading');
         msgEl.textContent = data.content;
       } catch {
