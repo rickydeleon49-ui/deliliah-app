@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const { Pool } = require('pg');
 const cron = require('node-cron');
 const Anthropic = require('@anthropic-ai/sdk');
 const path = require('path');
@@ -8,25 +7,12 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── Database ────────────────────────────────────────────────────────────────
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-});
-
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id SERIAL PRIMARY KEY,
-      content TEXT NOT NULL,
-      type VARCHAR(10) NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `);
-  console.log('Database ready.');
-}
+// ─── In-memory store (one message at a time) ─────────────────────────────────
+let currentMessage = {
+  content: 'Something beautiful is on its way...',
+  type: 'morning',
+  created_at: new Date(),
+};
 
 // ─── Claude ──────────────────────────────────────────────────────────────────
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -53,21 +39,11 @@ Length: 2–4 sentences. Sign off with "— Ricky" at the end.`;
   return response.content[0].text.trim();
 }
 
-// ─── Message helpers ─────────────────────────────────────────────────────────
-async function saveMessage(content, type) {
-  await pool.query('INSERT INTO messages (content, type) VALUES ($1, $2)', [content, type]);
-}
-
-async function getLatestMessage() {
-  const result = await pool.query('SELECT * FROM messages ORDER BY created_at DESC LIMIT 1');
-  return result.rows[0] || null;
-}
-
 async function triggerNewMessage(type) {
   console.log(`Generating ${type} message...`);
   try {
     const content = await generateMessage(type);
-    await saveMessage(content, type);
+    currentMessage = { content, type, created_at: new Date() };
     console.log(`[${new Date().toISOString()}] New ${type} message saved.`);
   } catch (err) {
     console.error('Error generating message:', err.message);
@@ -86,20 +62,12 @@ cron.schedule('0 20 * * *', () => triggerNewMessage('evening'), {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/message', async (req, res) => {
-  try {
-    const message = await getLatestMessage();
-    res.json(message || { content: 'Something beautiful is on its way...', type: 'morning', created_at: new Date() });
-  } catch (err) {
-    res.status(500).json({ error: 'Could not fetch message' });
-  }
+app.get('/api/message', (req, res) => {
+  res.json(currentMessage);
 });
 
-// Next message time (8am or 8pm Pacific, whichever is next)
 app.get('/api/next', (req, res) => {
-  const now = new Date();
-  // Get current time in LA
-  const la = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const la = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
   const h = la.getHours();
   const m = la.getMinutes();
   const s = la.getSeconds();
@@ -117,23 +85,17 @@ app.get('/api/next', (req, res) => {
     next.setHours(8, 0, 0, 0);
   }
 
-  const diffMs = next - la;
-  res.json({ nextMs: diffMs });
+  res.json({ nextMs: next - la });
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 async function start() {
-  await initDB();
-
-  // Seed a message on first boot if DB is empty
-  const existing = await getLatestMessage();
-  if (!existing) {
-    const la = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const type = la.getHours() < 12 ? 'morning' : 'evening';
-    await triggerNewMessage(type);
-  }
-
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+  // Generate first message immediately on boot
+  const la = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const type = la.getHours() < 12 ? 'morning' : 'evening';
+  await triggerNewMessage(type);
 }
 
 start().catch(console.error);
