@@ -25,6 +25,7 @@ const prompts = {
 
 async function generateMessage(type) {
   const systemPrompt = `You write short, sweet, deeply personal love messages from Ricky to his girlfriend Kinna.
+Every message must include a genuine compliment about how beautiful Kinna is — make it feel specific and heartfelt, not generic.
 Tone: warm, romantic, heartfelt, and genuine. Not cheesy or generic — make it feel real and personal.
 Length: 2–4 sentences. Sign off with "— Ricky" at the end.`;
 
