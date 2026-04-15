@@ -87,13 +87,18 @@ app.get('/api/next', (req, res) => {
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-async function start() {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
+function getCurrentType() {
   const la = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
   const h  = la.getHours();
-  const type = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
-  await triggerNewMessage(type);
+  return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+}
+
+async function start() {
+  // Set correct type immediately so the label is right even before generation
+  currentMessage.type = getCurrentType();
+
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  await triggerNewMessage(getCurrentType());
 }
 
 start().catch(console.error);
