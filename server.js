@@ -57,9 +57,30 @@ cron.schedule('0 18 * * *', () => triggerNewMessage('evening'),   { timezone: 'A
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
 app.get('/api/message', (req, res) => {
   res.json(currentMessage);
+});
+
+// Manual send — protected by ADMIN_SECRET if set
+app.post('/api/send', (req, res) => {
+  const { content, type, secret } = req.body;
+
+  if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (!content || typeof content !== 'string' || !content.trim()) {
+    return res.status(400).json({ error: 'Message content is required' });
+  }
+
+  const validTypes = ['morning', 'afternoon', 'evening'];
+  const msgType = validTypes.includes(type) ? type : getCurrentType();
+
+  currentMessage = { content: content.trim(), type: msgType, created_at: new Date() };
+  console.log(`[${new Date().toISOString()}] Manual message sent.`);
+  res.json({ ok: true, message: currentMessage });
 });
 
 // Next message time among 8am, 2pm, 6pm Pacific

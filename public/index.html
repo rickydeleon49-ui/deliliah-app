@@ -151,7 +151,7 @@
       line-height: 1.85;
       color: var(--cream);
       min-height: 80px;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.3s ease;
     }
 
     .message.loading { opacity: 0.4; }
@@ -211,6 +211,86 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50%       { opacity: 0.3; transform: scale(0.7); }
     }
+
+    /* ── Send panel (hidden unless ?send in URL) ── */
+    .send-panel {
+      display: none;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: left;
+    }
+    .send-panel.visible { display: block; }
+
+    .send-panel label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .send-panel textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: white;
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      line-height: 1.6;
+      resize: vertical;
+      min-height: 90px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .send-panel textarea::placeholder { color: rgba(255,255,255,0.25); }
+    .send-panel textarea:focus { border-color: rgba(255,77,141,0.5); }
+
+    .send-panel input[type="password"] {
+      width: 100%;
+      margin-top: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: white;
+      font-family: 'Lato', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .send-panel input[type="password"]::placeholder { color: rgba(255,255,255,0.25); }
+    .send-panel input[type="password"]:focus { border-color: rgba(255,77,141,0.5); }
+
+    .send-btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ff4d8d, #c026d3);
+      color: white;
+      font-family: 'Lato', sans-serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.45; cursor: default; }
+
+    .send-status {
+      margin-top: 8px;
+      font-size: 11px;
+      text-align: center;
+      letter-spacing: 1px;
+      min-height: 16px;
+      color: var(--blush);
+    }
   </style>
 </head>
 <body>
@@ -233,6 +313,14 @@
     </div>
 
     <div class="live">live</div>
+
+    <div class="send-panel" id="sendPanel">
+      <label>send a message</label>
+      <textarea id="sendText" placeholder="Write something beautiful for Kinna…"></textarea>
+      <input type="password" id="sendSecret" placeholder="Secret" />
+      <button class="send-btn" id="sendBtn">Send</button>
+      <div class="send-status" id="sendStatus"></div>
+    </div>
   </div>
 
   <script>
@@ -261,23 +349,37 @@
     // ── Message fetch ─────────────────────────────────────────────────────
     const msgEl    = document.getElementById('message');
     const labelEl  = document.getElementById('label');
+    let lastCreatedAt = null;
 
-    async function loadMessage() {
+    const LABELS = { morning: 'Good Morning ☀️', afternoon: 'Good Afternoon 🌸', evening: 'Good Evening 🌙' };
+
+    async function loadMessage(forceShow = false) {
       try {
         const res  = await fetch('/api/message');
         const data = await res.json();
 
-        const labels = { morning: 'Good Morning ☀️', afternoon: 'Good Afternoon 🌸', evening: 'Good Evening 🌙' };
-        labelEl.textContent = labels[data.type] || 'Good Morning ☀️';
-        msgEl.classList.remove('loading');
-        msgEl.textContent = data.content;
+        // Only update display if message is new or forced
+        if (forceShow || data.created_at !== lastCreatedAt) {
+          lastCreatedAt = data.created_at;
+          labelEl.textContent = LABELS[data.type] || 'Good Morning ☀️';
+          // Fade out → update → fade in
+          msgEl.style.opacity = '0';
+          setTimeout(() => {
+            msgEl.textContent = data.content;
+            msgEl.classList.remove('loading');
+            msgEl.style.opacity = '';
+          }, 300);
+        }
       } catch {
         msgEl.textContent = 'Something beautiful is on its way…';
         msgEl.classList.remove('loading');
       }
     }
 
-    loadMessage();
+    loadMessage(true);
+
+    // Auto-poll every 30 s so new messages appear without a page refresh
+    setInterval(() => loadMessage(), 30_000);
 
     // ── Countdown ─────────────────────────────────────────────────────────
     const countdownEl = document.getElementById('countdown');
@@ -315,6 +417,48 @@
     fetchNext();
     setInterval(tickCountdown, 1000);
     setInterval(fetchNext, 60_000); // re-sync every minute
+
+    // ── Send panel (shown when ?send is in the URL) ────────────────────
+    if (new URLSearchParams(window.location.search).has('send')) {
+      document.getElementById('sendPanel').classList.add('visible');
+    }
+
+    const sendBtn    = document.getElementById('sendBtn');
+    const sendText   = document.getElementById('sendText');
+    const sendSecret = document.getElementById('sendSecret');
+    const sendStatus = document.getElementById('sendStatus');
+
+    sendBtn.addEventListener('click', async () => {
+      const content = sendText.value.trim();
+      const secret  = sendSecret.value;
+
+      if (!content) { sendStatus.textContent = 'Write a message first.'; return; }
+
+      sendBtn.disabled = true;
+      sendStatus.textContent = 'Sending…';
+
+      try {
+        const res  = await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, secret }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          sendStatus.textContent = data.error || 'Something went wrong.';
+        } else {
+          sendStatus.textContent = 'Sent ♥';
+          sendText.value = '';
+          // Immediately refresh the displayed message
+          await loadMessage(true);
+        }
+      } catch {
+        sendStatus.textContent = 'Network error — try again.';
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
